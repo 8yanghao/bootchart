@@ -54,13 +54,13 @@ TEXT_COLOR = (0.0, 0.0, 0.0, 1.0)
 # Font family
 FONT_NAME = "Bitstream Vera Sans"
 # Title text font.
-TITLE_FONT_SIZE = 18
+TITLE_FONT_SIZE = 22
 # Default text font.
-TEXT_FONT_SIZE = 12
+TEXT_FONT_SIZE = 16
 # Axis label font.
-AXIS_FONT_SIZE = 11
+AXIS_FONT_SIZE = 15
 # Legend font.
-LEGEND_FONT_SIZE = 12
+LEGEND_FONT_SIZE = 14
 
 # CPU load chart color.
 CPU_COLOR = (0.40, 0.55, 0.70, 1.0)
@@ -71,13 +71,15 @@ DISK_TPUT_COLOR = (0.20, 0.71, 0.20, 1.0)
 # CPU load chart color.
 FILE_OPEN_COLOR = (0.20, 0.71, 0.71, 1.0)
 # Mem cached color
-MEM_CACHED_COLOR = CPU_COLOR
+MEM_CACHED_COLOR = (1, 1, 0, 1)
 # Mem used color
-MEM_USED_COLOR = IO_COLOR
+MEM_USED_COLOR = (1, 0, 0, 1)
+# Mem free color
+MEM_FREE_COLOR = (0, 1, 0, 1)
 # Buffers color
-MEM_BUFFERS_COLOR = (0.4, 0.4, 0.4, 0.3)
+MEM_BUFFERS_COLOR = (0, 1, 1, 1)
 # Swap color
-MEM_SWAP_COLOR = DISK_TPUT_COLOR
+MEM_SWAP_COLOR = (0, 0, 0, 1)
 
 # Process border color.
 PROC_BORDER_COLOR = (0.71, 0.71, 0.71, 1.0)
@@ -99,14 +101,14 @@ PROC_COLOR_W = (0.71, 0.71, 0.71, 0.125)
 # Process label color.
 PROC_TEXT_COLOR = (0, 0, 0, 1.0)
 # Process label font.
-PROC_TEXT_FONT_SIZE = 12
+PROC_TEXT_FONT_SIZE = 16
 
 # Signature color.
-SIG_COLOR = (0.0, 0.0, 0.0, 0.3125)
+SIG_COLOR = (0.0, 0.0, 1, 1)
 # Signature font.
-SIG_FONT_SIZE = 14
+SIG_FONT_SIZE = 18
 # Signature text.
-SIGNATURE = "http://github.com/mmeeks/bootchart"
+SIGNATURE = "http://github.com/arnoldlu/bootchart"
 
 # Process dependency line color.
 DEP_COLOR = (0.75, 0.75, 0.75, 1.0)
@@ -270,8 +272,8 @@ meminfo_bar_h = 2 * bar_h
 header_h = 110 + 2 * (30 + bar_h) + 1 * (30 + meminfo_bar_h)
 # offsets
 off_x, off_y = 10, 10
-sec_w_base = 50 # the width of a second
-proc_h = 16 # the height of a process
+sec_w_base = 200 # the width of a second
+proc_h = 32 # the height of a process
 leg_s = 10
 MIN_IMG_W = 800
 CUML_HEIGHT = 2000 # Increased value to accomodate CPU and I/O Graphs
@@ -353,27 +355,32 @@ def render_charts(ctx, options, clip, trace, curr_y, w, h, sec_w):
 	chart_rect = (off_x, curr_y+30, w, meminfo_bar_h)
 	mem_stats = trace.mem_stats
 	if mem_stats and clip_visible (clip, chart_rect):
-		mem_scale = max(sample.records['MemTotal'] - sample.records['MemFree'] for sample in mem_stats)
+		#mem_scale = max(sample.records['MemTotal'] - sample.records['MemFree'] for sample in mem_stats)
+		mem_scale = max(sample.records['MemTotal'] for sample in mem_stats)
 		draw_legend_box(ctx, "Mem cached (scale: %u MiB)" % (float(mem_scale) / 1024), MEM_CACHED_COLOR, off_x, curr_y+20, leg_s)
 		draw_legend_box(ctx, "Used", MEM_USED_COLOR, off_x + 240, curr_y+20, leg_s)
 		draw_legend_box(ctx, "Buffers", MEM_BUFFERS_COLOR, off_x + 360, curr_y+20, leg_s)
 		draw_legend_line(ctx, "Swap (scale: %u MiB)" % max([(sample.records['SwapTotal'] - sample.records['SwapFree'])/1024 for sample in mem_stats]), \
 				 MEM_SWAP_COLOR, off_x + 480, curr_y+20, leg_s)
+		draw_legend_box(ctx, "Free", MEM_FREE_COLOR, off_x + 700, curr_y+20, leg_s)
 		draw_box_ticks(ctx, chart_rect, sec_w)
 		draw_annotations(ctx, proc_tree, trace.times, chart_rect)
+
+		draw_chart(ctx, MEM_FREE_COLOR, True, chart_rect, \
+			   [(sample.time, sample.records['MemTotal']) for sample in trace.mem_stats], \
+			   proc_tree, [0, mem_scale])
 		draw_chart(ctx, MEM_BUFFERS_COLOR, True, chart_rect, \
 			   [(sample.time, sample.records['MemTotal'] - sample.records['MemFree']) for sample in trace.mem_stats], \
 			   proc_tree, [0, mem_scale])
-		draw_chart(ctx, MEM_USED_COLOR, True, chart_rect, \
-			   [(sample.time, sample.records['MemTotal'] - sample.records['MemFree'] - sample.records['Buffers']) for sample in mem_stats], \
-			   proc_tree, [0, mem_scale])
 		draw_chart(ctx, MEM_CACHED_COLOR, True, chart_rect, \
-			   [(sample.time, sample.records['Cached']) for sample in mem_stats], \
+			   [(sample.time, sample.records['MemTotal'] - sample.records['MemFree'] - sample.records['Buffers']) for sample in trace.mem_stats], \
+			   proc_tree, [0, mem_scale])
+		draw_chart(ctx, MEM_USED_COLOR, True, chart_rect, \
+			   [(sample.time, sample.records['MemTotal'] - sample.records['MemFree'] - sample.records['Buffers'] - sample.records['Cached']) for sample in trace.mem_stats], \
 			   proc_tree, [0, mem_scale])
 		draw_chart(ctx, MEM_SWAP_COLOR, False, chart_rect, \
 			   [(sample.time, float(sample.records['SwapTotal'] - sample.records['SwapFree'])) for sample in mem_stats], \
 			   proc_tree, None)
-
 		curr_y = curr_y + meminfo_bar_h
 
 	return curr_y
