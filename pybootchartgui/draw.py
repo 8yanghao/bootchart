@@ -65,7 +65,7 @@ LEGEND_FONT_SIZE = 12
 # CPU load chart color.
 CPU_COLOR = (0.40, 0.55, 0.70, 1.0)
 # IO wait chart color.
-IO_COLOR = (0.76, 0.48, 0.48, 0.5)
+IO_COLOR = (1, 1, 0, 1)
 # Disk throughput color.
 DISK_TPUT_COLOR = (0.20, 0.71, 0.20, 1.0)
 # CPU load chart color.
@@ -82,22 +82,22 @@ MEM_SWAP_COLOR = DISK_TPUT_COLOR
 # Process border color.
 PROC_BORDER_COLOR = (0.71, 0.71, 0.71, 1.0)
 # Waiting process color.
-PROC_COLOR_D = (0.76, 0.48, 0.48, 0.5)
+PROC_COLOR_D = (1, 1, 0, 1)
 # Running process color.
-PROC_COLOR_R = CPU_COLOR
+PROC_COLOR_R = (0, 1, 0, 1.0)
 # Sleeping process color.
-PROC_COLOR_S = (0.94, 0.94, 0.94, 1.0)
+PROC_COLOR_S = (0.5, 0.5, 0.5, 1.0)
 # Stopped process color.
 PROC_COLOR_T = (0.94, 0.50, 0.50, 1.0)
 # Zombie process color.
-PROC_COLOR_Z = (0.71, 0.71, 0.71, 1.0)
+PROC_COLOR_Z = (1, 0, 0, 1.0)
 # Dead process color.
 PROC_COLOR_X = (0.71, 0.71, 0.71, 0.125)
 # Paging process color.
 PROC_COLOR_W = (0.71, 0.71, 0.71, 0.125)
 
 # Process label color.
-PROC_TEXT_COLOR = (0.19, 0.19, 0.19, 1.0)
+PROC_TEXT_COLOR = (0, 0, 0, 1.0)
 # Process label font.
 PROC_TEXT_FONT_SIZE = 12
 
