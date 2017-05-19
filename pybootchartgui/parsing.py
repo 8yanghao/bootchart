@@ -448,7 +448,7 @@ def _parse_proc_disk_stat_log(file, numCpu):
     not sda1, sda2 etc. The format of relevant lines should be:
     {major minor name rio rmerge rsect ruse wio wmerge wsect wuse running use aveq}
     """
-    disk_regex_re = re.compile ('^([hsv]d.|mtdblock\d|mmcblk\d|cciss/c\d+d\d+.*)$')
+    disk_regex_re = re.compile ('^([hsv]d.|mtdblock\d|mmcblk\d|zftl\d|cciss/c\d+d\d+.*)$')
 
     # this gets called an awful lot.
     def is_relevant_line(linetokens):
@@ -529,7 +529,7 @@ def _parse_dmesg(writer, file):
     for line in file.read().decode('utf-8').split('\n'):
         t = timestamp_re.match (line)
         if t is None:
-#                       print "duff timestamp " + line
+            #print "duff timestamp " + line
             continue
 
         time_ms = float (t.group(1)) * 1000
@@ -544,37 +544,37 @@ def _parse_dmesg(writer, file):
             continue
         max_ts = max(time_ms, max_ts)
         if base_ts:
-#                       print "fscked clock: used %f instead of %f" % (time_ms - base_ts, time_ms)
+            print "fscked clock: used %f instead of %f" % (time_ms - base_ts, time_ms)
             time_ms -= base_ts
         m = split_re.match (t.group(2))
 
         if m is None:
             continue
-#               print "match: '%s'" % (m.group(1))
+        #print "match: '%s'" % (m.group(1))
         type = m.group(1)
         func = m.group(2)
         rest = m.group(3)
 
         if t.group(2).startswith ('Write protecting the') or \
-           t.group(2).startswith ('Freeing unused kernel memory'):
-            kernel.duration = time_ms / 10
+           t.group(2).startswith ('Freeing init memory'):
+            kernel.duration = time_ms/10
             continue
 
-#               print "foo: '%s' '%s' '%s'" % (type, func, rest)
+        #print "foo: '%s' '%s' '%s'" % (type, func, rest)
         if type == "calling":
             ppid = kernel.pid
             p = re.match ("\@ (\d+)", rest)
             if p is not None:
                 ppid = float (p.group(1)) // 1000
-#                               print "match: '%s' ('%g') at '%s'" % (func, ppid, time_ms)
+                #print "match: '%s' ('%g') at '%s'" % (func, ppid, time_ms)
             name = func.split ('+', 1) [0]
             idx += inc
-            processMap[func] = Process(writer, ppid + idx, name, ppid, time_ms / 10)
+            processMap[func] = Process(writer, ppid + idx, name, ppid, time_ms/10)
         elif type == "initcall":
-#                       print "finished: '%s' at '%s'" % (func, time_ms)
+            #print "finished: '%s' at '%s'" % (func, time_ms)
             if func in processMap:
                 process = processMap[func]
-                process.duration = (time_ms / 10) - process.start_time
+                process.duration = (time_ms/10) - process.start_time
             else:
                 print("corrupted init call for %s" % (func))
 
